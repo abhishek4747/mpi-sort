@@ -60,7 +60,10 @@ void quicksort(dataType *data, int size){
 	int data_size = size;
 	for (int s=world_size; s> 1; s=s>>1){
 		if (world_rank % s ==0){
-			pivot = splitq(data2, data_size);
+			if (data_size==0)
+				pivot = 0;
+			else
+				pivot = splitq(data2, data_size);
 			printf("%d is sending %d to %d.\n",world_rank,data_size-pivot,world_rank+ s/2);
 			MPI_Send(data2+pivot, data_size - pivot, MPI_LONG_LONG, world_rank + s/2, 0, MPI_COMM_WORLD);
 
