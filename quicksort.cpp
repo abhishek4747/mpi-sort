@@ -58,21 +58,36 @@ void quicksort(dataType *data, int size){
 
 	int pivot;
 	int data_size = size;
-	for (int s=world_size; s> 1; s=s>>1){
-		if (world_rank % s ==0){
+	MPI_Barrier(MPI_COMM_WORLD);
+	int lp = 0;
+	for (int s=world_size; s> 1; ){
+		if (world_rank ==lp){
 			if (data_size==0)
 				pivot = 0;
 			else
 				pivot = splitq(data2, data_size);
-			printf("%d is sending %d to %d.\n",world_rank,data_size-pivot,world_rank+ s/2);
-			MPI_Send(data2+pivot, data_size - pivot, MPI_LONG_LONG, world_rank + s/2, 0, MPI_COMM_WORLD);
+			if (true || world_rank+s/2 <world_size){
+				printf("%d is sending %d to %d.\n",world_rank,data_size-pivot,world_rank+ s/2);
+				MPI_Send(data2+pivot, data_size - pivot, MPI_LONG_LONG, world_rank + s/2, 0, MPI_COMM_WORLD);
 
-			data_size = pivot;
-		}else if (world_rank % s == s>>1){
-			MPI_Recv(data2, size, MPI_LONG_LONG, world_rank- s/2, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-			MPI_Get_count(&status, MPI_LONG_LONG, &data_size);
+				data_size = pivot;
+			}
+		}else if (world_rank  ==lp +  (s>>1)){
+			if (true || world_rank - s/2 >= 0){
+				MPI_Recv(data2, size, MPI_LONG_LONG, lp, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+				MPI_Get_count(&status, MPI_LONG_LONG, &data_size);
+			}
+		}
+		
+		int d = s>>1;
+		if (world_rank>=d + lp){
+			s = s - d;
+			lp = d + lp;
+		}else{
+			s = d;
 		}
 	}
+	//printf("Yo I am no. %d of %d and I have %d elements. \n",world_rank, world_size, data_size);
 	MPI_Barrier(MPI_COMM_WORLD);
 	int *gather_arr;
 	int *disp_arr;
