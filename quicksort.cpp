@@ -5,6 +5,8 @@
 using namespace std;
 
 int splitq ( dataType *a, int upper ){
+	if (upper==0)
+		return  0;
 	int  p, q;
 	p =  0 ;
 	q = upper - 1 ;
@@ -62,21 +64,14 @@ void quicksort(dataType *data, int size){
 	int lp = 0;
 	for (int s=world_size; s> 1; ){
 		if (world_rank ==lp){
-			if (data_size==0)
-				pivot = 0;
-			else
-				pivot = splitq(data2, data_size);
-			if (true || world_rank+s/2 <world_size){
-				printf("%d is sending %d to %d.\n",world_rank,data_size-pivot,world_rank+ s/2);
-				MPI_Send(data2+pivot, data_size - pivot, MPI_LONG_LONG, world_rank + s/2, 0, MPI_COMM_WORLD);
+			pivot = splitq(data2, data_size) + 1;
+			printf("%d is sending %d to %d.\n",world_rank,data_size-pivot,world_rank+ s/2);
+			MPI_Send(data2+pivot, data_size - pivot, MPI_LONG_LONG, world_rank + s/2, 0, MPI_COMM_WORLD);
 
 				data_size = pivot;
-			}
 		}else if (world_rank  ==lp +  (s>>1)){
-			if (true || world_rank - s/2 >= 0){
-				MPI_Recv(data2, size, MPI_LONG_LONG, lp, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-				MPI_Get_count(&status, MPI_LONG_LONG, &data_size);
-			}
+			MPI_Recv(data2, size, MPI_LONG_LONG, lp, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			MPI_Get_count(&status, MPI_LONG_LONG, &data_size);
 		}
 		
 		int d = s>>1;

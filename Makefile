@@ -42,17 +42,21 @@ unpublish:
 	done
 
 
-publish: 
+publish: unpublish 
 	for ip in $(IPs) ; do \
 		scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.$$ip:~/Desktop/mpi-sort ; \
 	done
 
-btest: blib test.cpp
+localbuild: blib test.cpp
 	mpic++ -o test test.cpp -B . -lpsort
 
-test: btest publish
+build: localbuild publish
+	
+run: test
 	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x PATH=$$PATH -np $(N) -H $(Hosts) ~/Desktop/mpi-sort/test $(T) $(S)
 
+local: test
+	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -np $(N) ./test $(T) $(S)
 clean: unpublish
 	rm -f *.o
 	rm -f *.so
