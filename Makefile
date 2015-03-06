@@ -2,7 +2,8 @@ T = 10
 N = 4
 S = q
 
-IPs = 11 12 14 16 17 19 20
+IPs = 11 12 16 17 19 20
+Hosts = 172.16.7.11,172.16.7.12,172.16.7.13,172.16.7.16,172.16.7.17,172.16.7.19,172.16.7.20 
 
 G_ARGS = mpic++  -fPIC -c -g  -Wall 
 
@@ -45,11 +46,14 @@ publish:
 	for ip in $(IPs) ; do \
 		scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.$$ip:~/Desktop/mpi-sort ; \
 	done
-test: blib test.cpp
-	mpic++ -o test test.cpp -B . -lpsort
-	LD_LIBRARY_PATH=. mpirun -n $(N) ./test $(T) $(S)
 
-clean:
+btest: blib test.cpp
+	mpic++ -o test test.cpp -B . -lpsort
+
+test: btest publish
+	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x PATH=$$PATH -np $(N) -H $(Hosts) ~/Desktop/mpi-sort/test $(T) $(S)
+
+clean: unpublish
 	rm -f *.o
 	rm -f *.so
 	rm -f test
