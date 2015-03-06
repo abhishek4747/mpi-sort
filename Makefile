@@ -2,6 +2,8 @@ T = 10
 N = 4
 S = q
 
+IPs = 11 12 14 16 17 19 20
+
 G_ARGS = mpic++  -fPIC -c -g  -Wall 
 
 all:
@@ -34,26 +36,15 @@ blib: ball
 	mpic++ -shared -o libpsort.so quicksort.o mergesort.o radixsort.o othersort.o sort.o pquick.o helper.o
 
 unpublish:
-	ssh 172.16.7.11 "rm -rf ~/Desktop/*"
-	ssh 172.16.7.12 "rm -rf ~/Desktop/*"
-	ssh 172.16.7.14 "rm -rf ~/Desktop/*"
-	#ssh 172.16.7.15 "rm -rf ~/Desktop/*"
-	ssh 172.16.7.16 "rm -rf ~/Desktop/*"
-	ssh 172.16.7.17 "rm -rf ~/Desktop/*"
-	ssh 172.16.7.19 "rm -rf ~/Desktop/*"
-	ssh 172.16.7.20 "rm -rf ~/Desktop/*"
+	for ip in $(IPs) ; do \
+		ssh 172.16.7.$$ip "rm -rf ~/Desktop/*"; \
+	done
 
 
 publish: 
-	scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.11:~/Desktop/mpi-sort
-	scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.12:~/Desktop/mpi-sort
-	scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.14:~/Desktop/mpi-sort
-	#scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.15:~/Desktop/mpi-sort
-	scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.16:~/Desktop/mpi-sort
-	scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.17:~/Desktop/mpi-sort
-	scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.19:~/Desktop/mpi-sort
-	scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.20:~/Desktop/mpi-sort
-
+	for ip in $(IPs) ; do \
+		scp -prq 172.16.7.13:~/Desktop/mpi-sort/. 172.16.7.$$ip:~/Desktop/mpi-sort ; \
+	done
 test: blib test.cpp
 	mpic++ -o test test.cpp -B . -lpsort
 	LD_LIBRARY_PATH=. mpirun -n $(N) ./test $(T) $(S)
