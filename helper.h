@@ -5,6 +5,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
+#include <omp.h>
 #include <mpi.h>
 
 #define getkey(d,i) ((long long)d[i].key)

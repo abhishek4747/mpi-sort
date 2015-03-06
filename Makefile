@@ -1,11 +1,12 @@
 T = 10
 N = 4
 S = q
+O = 0
 
 IPs = 11 12 16 17 19 20
 Hosts = 172.16.7.11,172.16.7.12,172.16.7.13,172.16.7.16,172.16.7.17,172.16.7.19,172.16.7.20 
 
-G_ARGS = mpic++  -fPIC -c -g  -Wall 
+G_ARGS = mpic++ -fopenmp -fPIC -c -g  -Wall
 
 all:
 	@echo "try 'make test'"
@@ -48,15 +49,15 @@ publish: unpublish
 	done
 
 localbuild: blib test.cpp
-	mpic++ -o test test.cpp -B . -lpsort
+	mpic++ -fopenmp -Wall -o test test.cpp -B . -lpsort
 
 build: localbuild publish
 	
 run: test
-	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x PATH=$$PATH -np $(N) -H $(Hosts) ~/Desktop/mpi-sort/test $(T) $(S)
+	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x PATH=$$PATH -x OMPE=$(O) -np $(N) -H $(Hosts) ~/Desktop/mpi-sort/test $(T) $(S)
 
 local: test
-	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -np $(N) ./test $(T) $(S)
+	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x OMPE=$(O) -np $(N) ./test $(T) $(S)
 clean: unpublish
 	rm -f *.o
 	rm -f *.so

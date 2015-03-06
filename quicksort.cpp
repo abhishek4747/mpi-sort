@@ -4,6 +4,8 @@
 
 using namespace std;
 
+int OPENMP = 0;
+
 int splitq ( dataType *a, int upper ){
 	if (upper==0)
 		return  0;
@@ -36,13 +38,19 @@ void qsort(dataType *data, int start, int end){
 	else if (start+1<end){
 		int size = end - start;
 		int store = start + splitq(data+start, size);
-		
-		qsort(data, start, store);
-		qsort(data, store+1, end);
+		#pragma omp task if (size > 1 <<20)
+		{
+			qsort(data, start, store);
+		}
+		#pragma omp task if (size > 1 <<20)
+		{
+			qsort(data, store+1, end);
+		}		
 	}
 }
 
 void quicksort(dataType *data, int size){
+	OPENMP = atoi(getenv("OMPE"))==1;
 	int world_size, world_rank;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -106,7 +114,13 @@ void quicksort(dataType *data, int size){
 	}
 	cout<<world_rank<<","<<endl;
 	*/
-	qsort(data2, 0, data_size);
+	#pragma omp parallel if (OPENMP)
+	{
+		#pragma omp single nowait
+		{
+			qsort(data2, 0, data_size);
+		}
+	}
 	/*
 	MPI_Barrier(MPI_COMM_WORLD);
 	printf("I am no. %d of %d and I have sorted %d elements.\n",world_rank, world_size, data_size);
