@@ -4,7 +4,10 @@ S = q
 O = 0
 
 IPs = 11 12 16 17 19 20
-Hosts = 172.16.7.11,172.16.7.12,172.16.7.13,172.16.7.16,172.16.7.17,172.16.7.19,172.16.7.20 
+Hosts = 172.16.7.13,172.16.7.11,172.16.7.12,172.16.7.16,172.16.7.17,172.16.7.19,172.16.7.20 
+
+#H =  -hostfile host_file 
+H = -H $(Hosts)
 
 G_ARGS = mpic++ -fopenmp -fPIC -c -g  -Wall
 
@@ -26,16 +29,13 @@ bmerge: mergesort.cpp
 bradix: radixsort.cpp
 	$(G_ARGS) radixsort.cpp 
 
-bother: othersort.cpp
-	$(G_ARGS) othersort.cpp 
-
 bsort: sort.cpp
 	$(G_ARGS) sort.cpp
 
-ball: bquick bmerge bradix bother bsort bpquick bhelper
+ball: bquick bmerge bradix bsort bpquick bhelper
 
 blib: ball
-	mpic++ -shared -o libpsort.so quicksort.o mergesort.o radixsort.o othersort.o sort.o pquick.o helper.o
+	mpic++ -shared -o libpsort.so quicksort.o mergesort.o radixsort.o sort.o pquick.o helper.o
 
 unpublish:
 	for ip in $(IPs) ; do \
@@ -54,7 +54,7 @@ localbuild: blib test.cpp
 build: localbuild publish
 	
 run: test
-	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x PATH=$$PATH -x OMPE=$(O) -np $(N) -H $(Hosts) ~/Desktop/mpi-sort/test $(T) $(S)
+	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x PATH=$$PATH -x OMPE=$(O) -np $(N) $(H) ~/Desktop/mpi-sort/test $(T) $(S)
 
 local: test
 	mpirun -x LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:~/Desktop/mpi-sort -x OMPE=$(O) -np $(N) ./test $(T) $(S)

@@ -69,6 +69,8 @@ void rsort(dataType *data, int size, dataType *data2, int digit){
 	int *bsize;
 	int *bstart;
 	int *bstart2;
+	//#pragma omp critical
+	{
 		bsize = (int*) malloc(RADIX*sizeof(int));
 		bstart = (int*) malloc(RADIX*sizeof(int));
 		bstart2 = (int*) malloc(RADIX*sizeof(int));
@@ -76,15 +78,21 @@ void rsort(dataType *data, int size, dataType *data2, int digit){
 			cout<<"OUT OF MEMORY.\n";
 			exit(0);
 		}
+	}
 	memset(bsize, 0, RADIX*sizeof(int));
 
 	make_buckets(data, size, data2, digit, bsize, bstart, bstart2);
 	for (int i = 0; i < size;i++){
 		data[i] = data2[i];
 	}
+	//#pragma omp for
 	for (int i = 0; i < RADIX; ++i){
+		#pragma omp task if (bsize[i]> 1<<20)
+		{
 			rsort(data+bstart2[i],bsize[i],data2+bstart2[i],digit+1);
+		}
 	}
+	#pragma omp taskwait
 	free(bsize);
 	free(bstart);
 	free(bstart2);
@@ -97,5 +105,12 @@ void radixsort(dataType *data, int size){
 		cout<<"OUT OF MEMORY\n";
 		exit(0);
 	}
+	omp_set_nested(1);
+	#pragma omp parallel
+	{
+		#pragma omp single
+		{
 			rsort(data, size, data2, 0);
+		}
+	}
 }

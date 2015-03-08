@@ -17,7 +17,6 @@ void arrayPrint(dataType *data, int n = NUM_OF_ELEMENTS){
             cout<<getkey(data,i)<<"\t";
         else
             cout<</*(bitset<64>)*/ getkey(data, i)<<"\n";
-
     }
     cout<<"\n"<<endl;
 }
@@ -50,11 +49,6 @@ int main(int argc, char** argv) {
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
 
-    // Print off a hello world message
-    //printf("Hello world from processor %s, rank %d"
-    //       " out of %d processors\n",
-    //       processor_name, world_rank, world_size);
-
 	if (argc>1){
 		NUM_OF_ELEMENTS = 1 << atoi(argv[1]);
 	}
@@ -83,27 +77,32 @@ int main(int argc, char** argv) {
 
 	/* Create a random array and distribute it */
 	dataType *data;
-	if (world_rank==0)
-		data=(dataType*)malloc(NUM_OF_ELEMENTS*sizeof(dataType));
-		if (data==0){
-			cout<<"OUT OF MEMORY.\n";
-			exit(0);
-		}
+	data=(dataType*)malloc(NUM_OF_ELEMENTS*sizeof(dataType));
+	if (data==0){
+		cout<<"OUT OF MEMORY.\n";
+		exit(0);
+	}
 	set <long long> s1;
 	if (world_rank==0){
+		int OMPE = atoi(getenv("OMPE"))==1;
 		srand(time(NULL));
 		/* fill array with random numbers */
 		/* -------------------------- */
 		srand(rand());srand(rand());
 		begin = MPI_Wtime();
 		unsigned seed;
-		seed = rand()*world_size;
-		for (int i = 0; i < NUM_OF_ELEMENTS; ++i){
-			int r = rand_r(&seed);
-			data[i].key = (long long *)(((((long long)(rand_r(&seed))<<31)|(long long)r)<<2)|(long long)(r>>29));
-			 //data[i].key = (long long *)(((long long)(rand_r(&seed))<<31)|r);
-			// data[i].key = (long long *)((long long)r>>20);
+		#pragma omp parallel private(seed) if (OMPE)
+		{	
+			seed = rand()*omp_get_thread_num();
+			#pragma omp parallel for 
+			for (int i = 0; i < NUM_OF_ELEMENTS; ++i){
+				int r = rand_r(&seed);
+				//data[i].key = (long long *)(((((long long)(rand_r(&seed))<<31)|(long long)r)<<2)|(long long)(r>>29));
+				 //data[i].key = (long long *)(((long long)(rand_r(&seed))<<31)|r);
+				 data[i].key = (long long *)((long long)r>>20);
+			}
 		}
+		
 		if (NUM_OF_ELEMENTS < MIN_NUM){
 			for (int i = 0; i < NUM_OF_ELEMENTS; ++i){
 				s1.insert(getkey(data,i));
@@ -112,8 +111,8 @@ int main(int argc, char** argv) {
 		end = MPI_Wtime();
 		time_spent = (double)(end - begin);
 		cout<<"Time: "<<time_spent<<" seconds to fill the array with "<<NUM_OF_ELEMENTS<<" numbers."<<endl;
-		if (NUM_OF_ELEMENTS< 1<<4)
-        arrayPrint(data);
+		if (NUM_OF_ELEMENTS<= 1<<5)
+       		arrayPrint(data);
 
 	}
 
@@ -153,15 +152,11 @@ int main(int argc, char** argv) {
 		end = MPI_Wtime();
 		time_spent = (double)(end - begin);
 		cout<<"Time: "<<time_spent<<" seconds to check if array is sorted."<<endl;
-		if (NUM_OF_ELEMENTS< 1<<4)
+		if (NUM_OF_ELEMENTS<= 1<<5)
 			arrayPrint(data);
+		free(data);
 	}
 	/* -------------------------- */
-
-	if (world_rank==0)
-		free(data);
-
-
 
     // Finalize the MPI environment.
     MPI_Finalize();
