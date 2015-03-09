@@ -32,7 +32,6 @@ long long applymask(long long key, int digit){
 
 void make_buckets(dataType *data, int size, dataType *data2,int digit, int *bsize, int *bstart, int *bstart2){
 
-
 	for (int i = 0; i < size; ++i){
 		int a = applymask(getkey(data,i), digit);
 		bsize[a] += 1;
@@ -100,17 +99,25 @@ void rsort(dataType *data, int size, dataType *data2, int digit){
 
 
 void radixsort(dataType *data, int size){
-	dataType *data2 = (dataType*)malloc(size*sizeof(dataType));
-	if (data2==0){
-		cout<<"OUT OF MEMORY\n";
-		exit(0);
-	}
-	omp_set_nested(1);
-	#pragma omp parallel
-	{
-		#pragma omp single
-		{
-			rsort(data, size, data2, 0);
+    // Setup Global and Environment variables
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    int OMPE = atoi(getenv("OMPE"))==1;
+
+	if (world_rank==0){
+		dataType *data2 = (dataType*)malloc(size*sizeof(dataType));
+		if (data2==0){
+			cout<<"OUT OF MEMORY\n";
+			exit(0);
 		}
+		omp_set_nested(1);
+		#pragma omp parallel if (OMPE)
+		{
+			#pragma omp single
+			{
+				rsort(data, size, data2, 0);
+			}
+		}
+		free(data2);
 	}
 }

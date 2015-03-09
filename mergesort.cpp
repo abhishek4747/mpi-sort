@@ -42,6 +42,7 @@ void mergesort(dataType *data, int size){
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	MPI_Status status;
+	MPI_Datatype dataTypeMPI = getDataTypeMPI();
     int OMPE = atoi(getenv("OMPE"))==1;
 	
 	// for MPI buffer
@@ -60,7 +61,7 @@ void mergesort(dataType *data, int size){
 	if (world_size>1){
 		int data_size = size;
 		long long chunk = ceil(((double)size/world_size));
-		MPI_Scatter(data,chunk,MPI_LONG_LONG,data2,chunk, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+		MPI_Scatter(data,chunk,dataTypeMPI,data2,chunk, dataTypeMPI, 0, MPI_COMM_WORLD);
 		data_size = chunk;
 		if ((world_rank==world_size-1)&& (size%world_size!=0)){
 				data_size = size%data_size;
@@ -96,7 +97,7 @@ void mergesort(dataType *data, int size){
 						int m;
 						MPI_Recv(&m,1,MPI_INT, world_rank+step,0,MPI_COMM_WORLD,&status);
 					
-						MPI_Recv(data3,m,MPI_LONG_LONG,world_rank+step,0,MPI_COMM_WORLD, &status);
+						MPI_Recv(data3,m,dataTypeMPI,world_rank+step,0,MPI_COMM_WORLD, &status);
 
 						//for(int i=0; i<data_size;i++)
 						//	cout<<"data3 "<<getkey(data3,i)<<" "<<world_rank<<"\t";
@@ -118,7 +119,7 @@ void mergesort(dataType *data, int size){
 				}else{
 					int dest = world_rank - step;
 					MPI_Send(&data_size,1,MPI_INT,dest,0,MPI_COMM_WORLD);
-					MPI_Send(data,data_size,MPI_LONG_LONG,dest,0,MPI_COMM_WORLD);
+					MPI_Send(data,data_size,dataTypeMPI,dest,0,MPI_COMM_WORLD);
 					//for(int i=0; i<data_size;i++)
 					//	cout<<"sent "<<getkey(data,i)<<" "<<world_rank<<"\t";
 					//cout<<endl;

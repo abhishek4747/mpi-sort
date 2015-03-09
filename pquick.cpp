@@ -143,6 +143,7 @@ void pquicksort(dataType *data, int size){
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	MPI_Status status;
+	MPI_Datatype dataTypeMPI = getDataTypeMPI();
 	int OMPE = atoi(getenv("OMPE"))==1;
 
 	// Allocate space on every node for sorting
@@ -189,10 +190,10 @@ void pquicksort(dataType *data, int size){
 				}
 			}
 			printf("%d is sending %d to %d.\n",world_rank,data_size-pivot,world_rank+ s/2);
-			MPI_Send(data2+pivot, data_size - pivot, MPI_LONG_LONG, world_rank + s/2, 0, MPI_COMM_WORLD);
+			MPI_Send(data2+pivot, data_size - pivot, dataTypeMPI, world_rank + s/2, 0, MPI_COMM_WORLD);
 			data_size = pivot;
 		}else if (world_rank  ==lp +  (s>>1)){
-			MPI_Recv(data2, size, MPI_LONG_LONG, lp, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			MPI_Recv(data2, size, dataTypeMPI, lp, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 			MPI_Get_count(&status, MPI_LONG_LONG, &data_size);
 		}
 		
@@ -234,7 +235,7 @@ void pquicksort(dataType *data, int size){
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (world_rank==0)
 		begin = MPI_Wtime();	
-	MPI_Gatherv(data2, data_size, MPI_LONG_LONG, data, gather_arr,disp_arr, MPI_LONG_LONG,0,MPI_COMM_WORLD);
+	MPI_Gatherv(data2, data_size, dataTypeMPI, data, gather_arr,disp_arr, dataTypeMPI,0,MPI_COMM_WORLD);
 	if (world_rank==0){
 		end = MPI_Wtime();
 		time_spent = (double)(end - begin);
