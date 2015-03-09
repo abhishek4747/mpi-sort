@@ -2,6 +2,9 @@
 	#include "sort.h"
 #endif
 
+#ifndef _HELPER
+#define _HELPER 1
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -16,3 +19,6 @@
 	d[a] = dt;  \
 	}
 
+MPI_Datatype getDataTypeMPI();
+
+#endif
