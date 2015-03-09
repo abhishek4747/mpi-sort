@@ -86,7 +86,7 @@ void rsort(dataType *data, int size, dataType *data2, int digit){
 	}
 	//#pragma omp for
 	for (int i = 0; i < RADIX; ++i){
-		#pragma omp task if (bsize[i]> 1<<20)
+		#pragma omp task if (bsize[i]> 1<<19)
 		{
 			rsort(data+bstart2[i],bsize[i],data2+bstart2[i],digit+1);
 		}

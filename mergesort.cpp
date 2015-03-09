@@ -44,6 +44,7 @@ void mergesort(dataType *data, int size){
 	MPI_Status status;
 	MPI_Datatype dataTypeMPI = getDataTypeMPI();
     int OMPE = atoi(getenv("OMPE"))==1;
+	double begin, end, time_spent;
 	
 	// for MPI buffer
 	dataType* data2=(dataType*)malloc(size*sizeof(dataType));
@@ -61,12 +62,20 @@ void mergesort(dataType *data, int size){
 	if (world_size>1){
 		int data_size = size;
 		long long chunk = ceil(((double)size/world_size));
+		if (world_rank==0)
+			begin  = MPI_Wtime();
+
 		MPI_Scatter(data,chunk,dataTypeMPI,data2,chunk, dataTypeMPI, 0, MPI_COMM_WORLD);
 		data_size = chunk;
 		if ((world_rank==world_size-1)&& (size%world_size!=0)){
 				data_size = size%data_size;
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
+		if (world_rank==0){
+			end = MPI_Wtime();
+			time_spent = (double)(end - begin);
+			cout<<"Time: "<<time_spent<<" seconds to distribute the array with "<<size<<" numbers in "<<world_size<<" nodes."<<endl;
+		}
 		printf("I am %d and I have %d elements.\n", world_rank, data_size);
 		/*
 		for(int i=0;i<data_size;i++)
@@ -85,10 +94,9 @@ void mergesort(dataType *data, int size){
 				msort(data, data_size, data2);	
 			}	
 		}
-		for (int i=0; i<data_size-1;i++)
-			if (getkey(data,i)>getkey(data,i+1))
-				cout<<"WRONG WRONG WRONG "<<world_rank<<"\n\n\n"<<endl;
 		MPI_Barrier(MPI_COMM_WORLD);
+		if (world_rank==0)
+            begin = MPI_Wtime();
 		int done = 0;
 		for (int step=1; step< world_size;step*=2){
 			if (!done){
@@ -129,6 +137,11 @@ void mergesort(dataType *data, int size){
 				}	
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
+		}
+		if (world_rank==0){
+            end = MPI_Wtime();
+            time_spent = (double)(end - begin);
+            cout<<"Time: "<<time_spent<<" seconds to gather the array with "<<size<<" numbers from "<<world_size<<" nodes."<<endl;
 		}
 	}
 	else{

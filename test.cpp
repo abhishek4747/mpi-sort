@@ -97,9 +97,9 @@ int main(int argc, char** argv) {
 			#pragma omp parallel for 
 			for (int i = 0; i < NUM_OF_ELEMENTS; ++i){
 				int r = rand_r(&seed);
-				//data[i].key = (long long *)(((((long long)(rand_r(&seed))<<31)|(long long)r)<<2)|(long long)(r>>29));
+				data[i].key = (long long *)(((((long long)(rand_r(&seed))<<31)|(long long)r)<<2)|(long long)(r>>29));
 				 //data[i].key = (long long *)(((long long)(rand_r(&seed))<<31)|r);
-				 data[i].key = (long long *)((long long)r);
+				 //data[i].key = (long long *)((long long)r);
 			}
 		}
 		
