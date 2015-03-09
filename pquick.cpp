@@ -234,7 +234,7 @@ void pquicksort(dataType *data, int size){
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (world_rank==0)
 		begin = MPI_Wtime();	
-	MPI_Gatherv(data2, data_size, MPI_LONG_LONG, data, gather_arr,disp_arr, MPI_LONG,0,MPI_COMM_WORLD);
+	MPI_Gatherv(data2, data_size, MPI_LONG_LONG, data, gather_arr,disp_arr, MPI_LONG_LONG,0,MPI_COMM_WORLD);
 	if (world_rank==0){
 		end = MPI_Wtime();
 		time_spent = (double)(end - begin);
