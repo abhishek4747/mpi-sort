@@ -5,8 +5,6 @@
 using namespace std;
 
 int splitq ( dataType *a, int upper ){
-	if (upper==0)
-		return  0;
 	int  p, q;
 	p =  0 ;
 	q = upper - 1 ;
@@ -43,7 +41,7 @@ void qsort(dataType *data, int start, int end){
 		#pragma omp task if (size > 1 <<20)
 		{
 			qsort(data, store+1, end);
-		}		
+		}
 	}
 }
 
@@ -85,12 +83,15 @@ void quicksort(dataType *data, int size){
 		int lp = 0;
 		for (int s=world_size; s> 1; ){
 			if (world_rank ==lp){
-				pivot = splitq(data2, data_size) + 1;
+				if (data_size==0)
+					pivot = 0;
+				else
+					pivot = splitq(data2, data_size) + 1;
 				printf("%d is sending %d to %d.\n",world_rank,data_size-pivot,world_rank+ s/2);
 				MPI_Send(data2+pivot, data_size - pivot, MPI_LONG_LONG, world_rank + s/2, 0, MPI_COMM_WORLD);
 				data_size = pivot;
 			}else if (world_rank  ==lp +  (s>>1)){
-				MPI_Recv(data2, size, MPI_LONG_LONG, lp, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+				MPI_Recv(data2, size, MPI_LONG_LONG, lp, 0, MPI_COMM_WORLD, &status);
 				MPI_Get_count(&status, MPI_LONG_LONG, &data_size);
 			}
 			
@@ -102,7 +103,7 @@ void quicksort(dataType *data, int size){
 				s = d;
 			}
 		}
-
+		//MPI_Barrier(MPI_COMM_WORLD);
 		if (world_rank==0){
 			disp_arr = (int*) malloc((world_size+1)*sizeof(int));
 			disp_arr[0] = 0;
@@ -118,7 +119,12 @@ void quicksort(dataType *data, int size){
 			time_spent = (double)(end - begin);
 			cout<<"Time: "<<time_spent<<" seconds to distribute the array with "<<size<<" numbers in "<<world_size<<" nodes."<<endl;
 		}
-
+		/*
+		long long d;
+		for (int i=0; i<data_size; i++){
+			d = getkey(data2,i);
+		}
+		*/
 		#pragma omp parallel if (OMPE)
 		{
 			#pragma omp single nowait
@@ -126,8 +132,6 @@ void quicksort(dataType *data, int size){
 				qsort(data2, 0, data_size);
 			}
 		}
-
-		MPI_Barrier(MPI_COMM_WORLD);
 		if (world_rank==0)
 			begin = MPI_Wtime();	
 		MPI_Gatherv(data2, data_size, MPI_LONG_LONG, data, gather_arr,disp_arr, MPI_LONG,0,MPI_COMM_WORLD);
